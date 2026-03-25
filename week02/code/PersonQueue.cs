@@ -1,67 +1,53 @@
 using System;
 using System.Collections.Generic;
 
-public class PriorityQueue
+public class TakingTurnsQueue
 {
-    private List<PriorityItem> _queue = new();
+    private Queue<Person> _queue = new();
 
-    /// <summary>
-    /// Add a new value to the queue with an associated priority.
-    /// The node is always added to the back of the queue regardless of the priority.
-    /// </summary>
-    public void Enqueue(string value, int priority)
+    public void AddPerson(string name, int turns)
     {
-        var newNode = new PriorityItem(value, priority);
-        _queue.Add(newNode);
+        _queue.Enqueue(new Person(name, turns));
     }
 
-    public string Dequeue()
+    public string GetNextPerson()
     {
         if (_queue.Count == 0)
         {
             throw new InvalidOperationException("The queue is empty.");
         }
 
-        // Find highest priority item
-        var highPriorityIndex = 0;
+        var person = _queue.Dequeue();
 
-        for (int index = 1; index < _queue.Count; index++)
+        // Se tiver turnos infinitos (0 ou menos), volta pra fila
+        if (person.Turns <= 0)
         {
-            if (_queue[index].Priority > _queue[highPriorityIndex].Priority)
+            _queue.Enqueue(person);
+        }
+        else
+        {
+            // decrementa turnos
+            person.Turns--;
+
+            // se ainda tiver turnos, volta pra fila
+            if (person.Turns > 0)
             {
-                highPriorityIndex = index;
+                _queue.Enqueue(person);
             }
         }
 
-        var value = _queue[highPriorityIndex].Value;
-
-        // Remove the item from the queue
-        _queue.RemoveAt(highPriorityIndex);
-
-        return value;
-    }
-
-    // DO NOT MODIFY
-    public override string ToString()
-    {
-        return $"[{string.Join(", ", _queue)}]";
+        return person.Name;
     }
 }
 
-internal class PriorityItem
+public class Person
 {
-    internal string Value { get; set; }
-    internal int Priority { get; set; }
+    public string Name { get; set; }
+    public int Turns { get; set; }
 
-    internal PriorityItem(string value, int priority)
+    public Person(string name, int turns)
     {
-        Value = value;
-        Priority = priority;
-    }
-
-    // DO NOT MODIFY
-    public override string ToString()
-    {
-        return $"{Value} (Pri:{Priority})";
+        Name = name;
+        Turns = turns;
     }
 }

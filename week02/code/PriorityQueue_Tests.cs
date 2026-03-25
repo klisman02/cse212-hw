@@ -2,68 +2,82 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 
 [TestClass]
-public class PriorityQueueTests
+public class TakingTurnsQueue_Tests
 {
     [TestMethod]
-    // Scenario: Add items with different priorities and remove the highest priority.
-    // Expected Result: The item with the highest priority should be returned.
-    // Defect(s) Found: Original code did not scan the entire queue and did not remove the item from the list.
-    public void TestPriorityQueue_1()
+    // Scenario: Add one person with 1 turn
+    // Expected Result: Person is returned once and then removed
+    // Defect(s) Found: Person was not removed correctly after last turn
+    public void Test_Turns_OnePerson_OneTurn()
     {
-        var priorityQueue = new PriorityQueue();
+        var queue = new TakingTurnsQueue();
 
-        priorityQueue.Enqueue("A", 1);
-        priorityQueue.Enqueue("B", 5);
-        priorityQueue.Enqueue("C", 3);
+        queue.AddPerson("A", 1);
 
-        var result = priorityQueue.Dequeue();
+        Assert.AreEqual("A", queue.GetNextPerson());
 
-        Assert.AreEqual("B", result);
+        Assert.ThrowsException<InvalidOperationException>(() => queue.GetNextPerson());
     }
 
     [TestMethod]
-    // Scenario: Multiple items with the same priority should follow FIFO order.
-    // Expected Result: The first inserted item should be removed first.
-    // Defect(s) Found: Using >= caused the last item with the same priority to be removed instead of the first.
-    public void TestPriorityQueue_2()
+    // Scenario: Person with multiple turns should be re-added until turns expire
+    // Expected Result: Person appears correct number of times
+    // Defect(s) Found: Turns were not decrementing correctly
+    public void Test_Turns_MultipleTurns()
     {
-        var priorityQueue = new PriorityQueue();
+        var queue = new TakingTurnsQueue();
 
-        priorityQueue.Enqueue("A", 5);
-        priorityQueue.Enqueue("B", 5);
-        priorityQueue.Enqueue("C", 5);
+        queue.AddPerson("A", 3);
 
-        var result = priorityQueue.Dequeue();
+        Assert.AreEqual("A", queue.GetNextPerson());
+        Assert.AreEqual("A", queue.GetNextPerson());
+        Assert.AreEqual("A", queue.GetNextPerson());
 
-        Assert.AreEqual("A", result);
+        Assert.ThrowsException<InvalidOperationException>(() => queue.GetNextPerson());
     }
 
     [TestMethod]
-    // Scenario: Attempt to dequeue from an empty queue.
-    // Expected Result: InvalidOperationException should be thrown with message "The queue is empty."
-    // Defect(s) Found: Works correctly once queue logic is fixed.
-    public void TestPriorityQueue_EmptyQueue()
+    // Scenario: Multiple people rotate in queue
+    // Expected Result: FIFO rotation with turns respected
+    // Defect(s) Found: Queue order was not maintained correctly
+    public void Test_Turns_MultiplePeople()
     {
-        var priorityQueue = new PriorityQueue();
+        var queue = new TakingTurnsQueue();
 
-        Assert.ThrowsException<InvalidOperationException>(() => priorityQueue.Dequeue());
+        queue.AddPerson("A", 2);
+        queue.AddPerson("B", 2);
+
+        Assert.AreEqual("A", queue.GetNextPerson());
+        Assert.AreEqual("B", queue.GetNextPerson());
+        Assert.AreEqual("A", queue.GetNextPerson());
+        Assert.AreEqual("B", queue.GetNextPerson());
+
+        Assert.ThrowsException<InvalidOperationException>(() => queue.GetNextPerson());
     }
 
     [TestMethod]
-    // Scenario: Ensure items are actually removed after dequeue.
-    // Expected Result: Second dequeue returns the next highest priority item.
-    // Defect(s) Found: Original code did not remove the item from the queue.
-    public void TestPriorityQueue_Removal()
+    // Scenario: Person with infinite turns (0 or less)
+    // Expected Result: Person always returns and never leaves queue
+    // Defect(s) Found: Infinite turns were not handled correctly
+    public void Test_Turns_Infinite()
     {
-        var priorityQueue = new PriorityQueue();
+        var queue = new TakingTurnsQueue();
 
-        priorityQueue.Enqueue("A", 1);
-        priorityQueue.Enqueue("B", 5);
-        priorityQueue.Enqueue("C", 3);
+        queue.AddPerson("A", 0);
 
-        priorityQueue.Dequeue();
-        var result = priorityQueue.Dequeue();
+        Assert.AreEqual("A", queue.GetNextPerson());
+        Assert.AreEqual("A", queue.GetNextPerson());
+        Assert.AreEqual("A", queue.GetNextPerson());
+    }
 
-        Assert.AreEqual("C", result);
+    [TestMethod]
+    // Scenario: Empty queue
+    // Expected Result: Exception thrown
+    // Defect(s) Found: Queue did not throw exception when empty
+    public void Test_Turns_EmptyQueue()
+    {
+        var queue = new TakingTurnsQueue();
+
+        Assert.ThrowsException<InvalidOperationException>(() => queue.GetNextPerson());
     }
 }
